@@ -30,10 +30,7 @@ class TextInterface:
             for x in range(len(s[y])):
                 v = s[y][x]
                 self.stdscr.addstr(y, x * 2, v)
-                # if v in ['^','>','v','<']:
-                #     self.stdscr.move(y, x)
-
-        # self.stdscr.refresh()
+        print(self.game.character.score)
 
     def stop(self):
         self.playing = False

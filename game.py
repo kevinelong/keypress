@@ -6,14 +6,17 @@ from position import Position
 
 class Game:
     def __init__(self, width=9, height=9):
-        self.board = Board(width, height)
-        self.character = Character(width // 2, height // 2)
-        self.treasure = Treasure(2, 2)
-        self.board.add_item(self.treasure)
-        self.board.add_item(self.character)
 
-    def draw(self):
-        self.board.draw()
+        self.board = Board(width, height)
+        self.character = Character()
+        self.board.place_center(self.character)
+        self.board.place_random(Treasure())
+
+    def get_map(self):
+        return self.board.get_state()
+
+    def place_treasure(self):
+        t = Treasure()
 
     def turn_right(self):
         self.character.direction = (self.character.direction + 1) % 4
@@ -54,5 +57,6 @@ class Game:
     def check_collisions(self):
         for item in self.board.content:
             if item != self.character and item.position.x == self.character.position.x and item.position.y == self.character.position.y:
+                self.character.score += item.value
                 self.board.content.remove(item)
                 break
