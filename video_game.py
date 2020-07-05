@@ -1,53 +1,40 @@
+import getch
+import clear_screen
 from game import Game
-import curses
-import curses.ascii
 
 
 class TextInterface:
-    def __init__(self):
-        self.stdscr = curses.initscr()
-        curses.noecho()
-        curses.cbreak()
-        curses.curs_set(0)
-
-        self.stdscr.keypad(True)
-        self.stdscr.refresh()
+    def __init__(self, game):
+        self.game = game
+        self.commands = {'quit': self.stop}
+        self.key_command_map = {}
+        self.map(['q', 'Q', 'x', 'X'], 'quit')
+        self.map(['w', 'W', '[A'], 'forward')
+        self.map(['a', 'A', '[D'], 'left')
+        self.map(['d', 'D', '[C'], 'right')
+        self.map(['s', 'S', '[B'], 'backward')
         self.playing = True
-        self.game = Game()
 
-    def __del__(self):
-        self.stdscr.clear()
-        curses.nocbreak()
-        self.stdscr.keypad(False)
-        curses.echo()
-        curses.endwin()
+    def map(self, key_list, command):
+        for k in key_list:
+            self.key_command_map[k] = command
 
     def draw(self):
-        self.stdscr.clear()
         s = self.game.board.get_state()
-
+        clear_screen.clear()
         for y in range(len(s)):
-            for x in range(len(s[y])):
-                v = s[y][x]
-                self.stdscr.addstr(y, x * 2, v)
+            print("  ".join(s[y]))
         print(self.game.character.score)
 
-    def stop(self):
-        self.playing = False
+    def execute(self, command):
+        self.commands[command]() if command in self.commands else self.game.execute(command)
 
     def user_input(self):
-        k = self.stdscr.getch()
-
-        if k in [curses.ascii.ESC, ord('q'), ord('Q'), ord('x'), ord('X')]:
-            self.playing = False
-        elif k in [curses.KEY_UP, ord('w'), ord('W')]:
-            self.game.forward()
-        elif k in [curses.KEY_LEFT, ord('a'), ord('A')]:
-            self.game.turn_left()
-        elif k in [curses.KEY_RIGHT, ord('d'), ord('D')]:
-            self.game.turn_right()
-        elif k in [curses.KEY_DOWN, ord('s'), ord('S')]:
-            self.game.backward()
+        k = getch.getch()
+        if k == '[' or k == 27:
+            k = k + getch.getch()
+        if k in self.key_command_map:
+            self.execute(self.key_command_map[k])
 
     def start(self):
         while self.playing:
@@ -55,5 +42,8 @@ class TextInterface:
             self.user_input()
             self.game.check_collisions()
 
+    def stop(self):
+        self.playing = False
 
-TextInterface().start()
+
+TextInterface(Game(3, 3)).start()

@@ -4,59 +4,58 @@ from position import Position
 
 class Board:
     def __init__(self, width=9, height=9):
-        self.width = width
-        self.height = height
-        self.content = []
+        self._grid = []
+        self._width = width
+        self._height = height
+        self._content = []
+        for y in range(self._height):
+            line = []
+            for x in range(self._width):
+                line.append('.')
+            self._grid.append(line)
 
-    def add_item(self, item):
-        self.content.append(item)
+    def _set(self, position, symbol):
+        self._grid[position.y][position.x] = symbol
+
+    def redraw(self, item):
+        self._set(item.position, item.get_symbol())
+
+    def remove(self, item):
+        self._content.remove(item)
+
+    def move(self, item, target_position):
+        self._grid[item.position.y][item.position.x] = '.'
+        item.position = target_position
+        self.redraw(item)
+
+    def place(self, item):
+        self.redraw(item)
+        self._content.append(item)
 
     def place_center(self, item):
-        item.position = Position(self.width // 2, self.height // 2)
-        self.content.append(item)
+        item.position = Position(self._width // 2, self._height // 2)
+        self.place(item)
 
     def random_position(self):
-        return Position(random.randint(0, self.width), random.randint(0, self.height))
+        return Position(random.randint(0, self._width - 1), random.randint(0, self._height - 1))
 
-    def place_random(self, item):
-        p = self.random_position()
+    def place_random(self, item, limit=999):
         tries = 0
-        while self.is_occupied(p) and tries < 999:
+        p = self.random_position()
+        while self.is_occupied(p) and tries < limit:
             p = self.random_position()
             tries += 1
         item.position = p
-        self.content.append(item)
+        self.place(item)
 
     def is_occupied(self, position):
-        if position is None:
-            return False
-        for item in self.content:
-            if item.position is not None:
-                if item.position.x == position.x and item.position.y == position.y:
-                    return True
-        return False
+        return self._grid[position.y][position.x] != '.'
 
     def get_state(self):
-        output = []
-        for y in range(0, self.height):
-            line = []
-            for x in range(0, self.width):
-                symbol = "."
-                for item in self.content:
-                    if item.position.x == x and item.position.y == y:
-                        symbol = item.get_symbol()
-                        break
-                line.append(symbol)
-            output.append(line)
-        return output
+        return self._grid
 
     def is_on_board(self, position):
-        if position.x < 0:
-            return False
-        elif position.y < 0:
-            return False
-        elif position.x + 1 > self.width:
-            return False
-        elif position.y + 1 > self.height:
-            return False
-        return True
+        return position.x >= 0 and \
+               position.y >= 0 and \
+               position.x + 1 <= self._width and \
+               position.y + 1 <= self._height
